@@ -80,7 +80,8 @@ async function generate(mode, opts, content) {
     const fb = cfg().fallbackModel || 'gemini-3.5-flash-lite';
     if (mode !== MODES.CLOUD || fb === cfg().cloudModel || !OVERLOADED.test(String(e?.message || e))) throw e;
     console.info('[Second Look] main model unavailable, retrying with', fb);
-    return await modelFor(mode, { ...opts, model: fb }).generateContent(content);
+    try { return await modelFor(mode, { ...opts, model: fb }).generateContent(content); }
+    catch (e2) { throw new Error(`${cfg().cloudModel}: ${String(e.message).replace(/^.*\] /, '').slice(0, 90)} | ${fb}: ${String(e2.message).replace(/^.*\] /, '').slice(0, 90)}`); }
   }
 }
 
