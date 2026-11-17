@@ -56,6 +56,11 @@ export async function downloadOnDeviceModel(onProgress) {
 
 function modelFor(mode, { lang = 'en', image = false, json = true } = {}) {
   const c = cfg();
+  // Cloud-only: a plain Firebase AI Logic cloud model, so the SDK never touches the on-device
+  // runtime (some Chrome builds expose LanguageModel but hang when a session is created).
+  if (mode === MODES.CLOUD) {
+    return getGenerativeModel(ai, { model: c.cloudModel, generationConfig: json ? { temperature: 0.2, responseMimeType: 'application/json', responseSchema: VERDICT_SCHEMA } : { temperature: 0.3 } });
+  }
   return getGenerativeModel(ai, {
     mode,
     onDeviceParams: { createOptions: { ...langOpts(ON_DEVICE_LANGS.includes(lang) ? lang : 'en', image), temperature: 0.2, topK: 3 }, promptOptions: json ? { responseConstraint: VERDICT_SCHEMA } : {} },
