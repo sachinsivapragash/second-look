@@ -75,13 +75,15 @@ const langLine = (lang) => (lang && lang !== 'en' ? `Write explanation, flags an
 // Cloud calls fall back to a lighter model when the main one is overloaded (HTTP 429/500/503).
 const OVERLOADED = /429|500|503|high demand|overloaded|unavailable|exhausted|quota/i;
 const errText = (e) => [e?.message, e?.code, e?.customErrorData?.status, e?.customErrorData?.statusText, String(e)].join(" ");
+// Never leave the user waiting forever (for example when App Check is throttled): give up after 25 s.
+const withTimeout = (p, ms = 25000) => Promise.race([p, new Promise((_, no) => setTimeout(() => no(new Error('The AI took too long to answer (timeout)')), ms))]);
 async function generate(mode, opts, content) {
-  try { return await modelFor(mode, opts).generateContent(content); }
+  try { return await withTimeout(modelFor(mode, opts).generateContent(content)); }
   catch (e) {
     const fb = cfg().fallbackModel || 'gemini-3.5-flash-lite';
     if (mode !== MODES.CLOUD || fb === cfg().cloudModel || !OVERLOADED.test(errText(e))) throw e;
     console.info('[Second Look] main model unavailable, retrying with', fb);
-    try { return await modelFor(mode, { ...opts, model: fb }).generateContent(content); }
+    try { return await withTimeout(modelFor(mode, { ...opts, model: fb }).generateContent(content)); }
     catch (e2) { throw new Error(`${cfg().cloudModel}: ${String(e.message).replace(/^.*\] /, '').slice(0, 90)} | ${fb}: ${String(e2.message).replace(/^.*\] /, '').slice(0, 90)}`); }
   }
 }
