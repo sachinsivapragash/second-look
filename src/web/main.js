@@ -206,7 +206,7 @@ async function ask(q) {
   out.innerHTML = '<p class="answer">Thinking…</p>';
   try {
     const a = await followUp(q, { text: lastText, verdict: lastVerdict, privateOnly: $('#private').checked, lang: $('#lang').value });
-    out.innerHTML = `<p class="answer"><b>${esc(q)}</b>\n${esc(a.answer)}<span class="by">${a.source === 'on_device' ? '🔒 Answered on this device' : a.source === 'in_cloud' ? '☁ Answered in the cloud (message redacted)' : '🧩 No AI available'}</span></p>`;
+    out.innerHTML = `<p class="answer"><b>${esc(q)}</b>\n${esc(a.answer).replace(/\*\*(.+?)\*\*/g, '<b>$1</b>')}<span class="by">${a.source === 'on_device' ? '🔒 Answered on this device' : a.source === 'in_cloud' ? '☁ Answered in the cloud (message redacted)' : '🧩 No AI available'}</span></p>`;
   } catch (err) { out.innerHTML = `<p class="answer">${esc(err.message)}</p>`; }
 }
 document.addEventListener('click', (e) => { const b = e.target.closest('[data-q]'); if (b) ask(b.dataset.q); });
