@@ -1,0 +1,10 @@
+{
+  "manifest_version": 3,
+  "name": "Second Look: is this a scam?",
+  "version": "0.1.0",
+  "description": "Right-click any text to check it for scam warning signs. Instant checks run locally; the full AI check opens Second Look without sending the text to any server you didn't choose.",
+  "action": { "default_popup": "popup.html", "default_title": "Second Look" },
+  "background": { "service_worker": "dist/background.js", "type": "module" },
+  "permissions": ["contextMenus", "activeTab", "scripting"],
+  "icons": { "128": "icon-128.png" }
+}

@@ -1,5 +1,5 @@
 // Second Look web UI.
-import { check, onDeviceAvailability, downloadOnDeviceModel, reportDomain, reportCount, cfg, configReady } from './ai.js';
+import { check, checkImage, followUp, onDeviceAvailability, onDeviceImageAvailability, downloadOnDeviceModel, reportDomain, reportCount, cfg, configReady, ANSWER_LANGUAGES, ON_DEVICE_LANGS } from './ai.js';
 
 const $ = (s) => document.querySelector(s);
 const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
@@ -54,10 +54,19 @@ function highlight(text, quotes) {
   return html;
 }
 
+function askBox(r) {
+  const qs = r.risk === 'low' ? ['How can I double-check who sent this?', 'What signs should I watch for?']
+    : ['I already clicked the link. What now?', 'I already paid or shared a code. What now?', 'How do I report this?'];
+  return `<div class="ask"><h3>Ask about it</h3><div class="qs">${qs.map((q) => `<button type="button" data-q="${esc(q)}">${esc(q)}</button>`).join('')}</div>
+    <form id="askf"><label for="q" class="sr">Your question</label><input id="q" maxlength="500" placeholder="Ask anything about this message…" autocomplete="off"><button type="submit">Ask</button></form><div id="answer" aria-live="polite"></div></div>`;
+}
 function receipt(r) {
   if (r.source === 'on_device') {
     return `<div class="receipt device"><div class="head"><span>PRIVACY RECEIPT</span><span>${r.ms} ms</span></div>
-      <p>🔒 Checked <b>on this device</b> with Gemini Nano.<br><b>Sent to the internet: nothing.</b></p></div>`;
+      <p>🔒 Checked <b>on this device</b> with Gemini Nano${r.image ? ', screenshot included' : ''}.<br><b>Sent to the internet: nothing.</b></p></div>`;
+  }
+  if (r.source === 'in_cloud' && r.image) {
+    return `<div class="receipt cloud"><div class="head"><span>PRIVACY RECEIPT</span><span>${r.ms} ms</span></div><p>☁ You agreed to send this screenshot (${esc(r.image.kb)} KB) to Gemini in the cloud through Firebase AI Logic, because this browser can’t read images on-device. Images can’t be redacted automatically, so it was sent as it is.</p></div>`;
   }
   if (r.source === 'in_cloud') {
     const items = Object.entries(r.redaction?.counts || {}).map(([k, n]) => `<li>${n} ${esc(KIND[k] || k)}${n > 1 ? 's' : ''}</li>`).join('');
@@ -88,7 +97,8 @@ async function render(text, r) {
     <h3>What to do</h3><ol class="todo">${todo.map((s) => `<li>${esc(s)}</li>`).join('')}</ol>
     ${r.redFlags.length ? `<h3>Why</h3><ul class="flags">${r.redFlags.map((f) => `<li>${esc(f.flag)}${f.quote ? `<q>${esc(f.quote)}</q>` : ''}</li>`).join('')}</ul>` : ''}
     ${hosts.length ? `<h3>Links in this message</h3><ul class="hosts">${hosts.map((h) => `<li><code>${esc(h)}</code><span class="count" data-host="${esc(h)}"></span><button type="button" data-report="${esc(h)}">Report as scam</button></li>`).join('')}</ul>` : ''}
-    <details class="msg"><summary>Show the message with warning signs highlighted</summary><blockquote>${highlight(text, quotes)}</blockquote></details>
+    ${r.image ? `<details class="msg"><summary>Show the screenshot</summary><img class="shot" src="${shotURL}" alt="Checked screenshot"></details>` : `<details class="msg"><summary>Show the message with warning signs highlighted</summary><blockquote>${highlight(text, quotes)}</blockquote></details>`}
+    ${askBox(r)}
     ${receipt(r)}`;
   for (const h of hosts) updateCount(h);
   $('#result').scrollIntoView?.({ block: 'nearest', behavior: matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth' });
@@ -128,13 +138,26 @@ document.addEventListener('click', async (e) => {
     catch (err) { rep.disabled = false; rep.textContent = 'Report as scam'; showErr('Could not send the report: ' + err.message); }
   }
 });
+let mode = 'text', shotFile = null, shotURL = '', lastText = '', lastVerdict = null;
 async function run() {
+  const privateOnly = $('#private').checked, lang = $('#lang').value;
+  if (mode === 'shot') {
+    if (!shotFile) { showErr('Choose or paste a screenshot first.'); return; }
+    showErr(''); const b = $('#go'); b.disabled = true; b.textContent = 'Checking…';
+    try {
+      const r = await checkImage(shotFile, { privateOnly, cloudConsent: $('#agree').checked, lang });
+      if (r.privateBlocked) { showErr('Private mode is on and this browser can’t read images on-device. Paste the text instead.'); return; }
+      if (r.needsConsent) { $('#consent').hidden = false; showErr('Tick the box to send this screenshot to the cloud, or paste the text instead (text is redacted automatically).'); return; }
+      lastText = ''; lastVerdict = r; await render('', r); addHistory(r);
+    } catch (err) { showErr(err.message); }
+    finally { b.disabled = false; b.textContent = 'Check it'; }
+    return;
+  }
   const text = $('#msg').value.trim();
   if (text.length < 8) { showErr('Paste a message first, or try one of the examples.'); $('#msg').focus(); return; }
   showErr(''); const b = $('#go'); b.disabled = true; b.textContent = 'Checking…';
-  const privateOnly = $('#private').checked;
   showLoading(privateOnly);
-  try { const r = await check(text, { privateOnly }); await render(text, r); addHistory(r); }
+  try { const r = await check(text, { privateOnly, lang }); lastText = text; lastVerdict = r; await render(text, r); addHistory(r); }
   catch (err) { $('#result').className = 'result'; $('#result').innerHTML = `<div class="placeholder"><p><b>Something went wrong.</b></p><p>${esc(err.message)}</p><p>Your message was not saved. Try again in a moment.</p></div>`; }
   finally { b.disabled = false; b.textContent = 'Check it'; }
 }
@@ -146,5 +169,46 @@ try { $('#private').checked = localStorage.getItem('second-look.private') === '1
 // Text shared into the page (from the Chrome extension) arrives in the URL fragment, which is never sent to a server.
 const shared = new URLSearchParams(location.hash.slice(1)).get('text');
 if (shared) { $('#msg').value = shared.slice(0, 20000); history.replaceState(null, '', location.pathname); }
+
+// ---- answer language ----
+const langSel = $('#lang');
+langSel.innerHTML = Object.entries(ANSWER_LANGUAGES).map(([k, v]) => `<option value="${k}">${v}${ON_DEVICE_LANGS.includes(k) ? '' : ' (cloud)'}</option>`).join('');
+try { langSel.value = localStorage.getItem('second-look.lang') || 'en'; } catch { /* ignore */ }
+langSel.addEventListener('change', () => { try { localStorage.setItem('second-look.lang', langSel.value); } catch { /* ignore */ } });
+
+// ---- tabs: text / screenshot ----
+function setMode(m) {
+  mode = m;
+  $('#tab-text').setAttribute('aria-selected', m === 'text'); $('#tab-shot').setAttribute('aria-selected', m === 'shot');
+  $('#pane-text').hidden = m !== 'text'; $('#pane-shot').hidden = m !== 'shot'; $('#examples').hidden = m !== 'text';
+  showErr('');
+}
+$('#tab-text').addEventListener('click', () => setMode('text'));
+$('#tab-shot').addEventListener('click', () => setMode('shot'));
+async function takeFile(f) {
+  if (!f || !/^image\//.test(f.type)) return showErr('That isn’t an image. Use a PNG, JPEG or WebP screenshot.');
+  shotFile = f; if (shotURL) URL.revokeObjectURL(shotURL); shotURL = URL.createObjectURL(f);
+  $('#preview').src = shotURL; $('#preview').hidden = false; $('.drop-empty').hidden = true; setMode('shot');
+  const avail = await onDeviceImageAvailability();
+  $('#consent').hidden = avail === 'available' || $('#private').checked; $('#agree').checked = false;
+}
+$('#file').addEventListener('change', (e) => takeFile(e.target.files[0]));
+const drop = $('#drop');
+['dragenter', 'dragover'].forEach((t) => drop.addEventListener(t, (e) => { e.preventDefault(); drop.classList.add('over'); }));
+['dragleave', 'drop'].forEach((t) => drop.addEventListener(t, (e) => { e.preventDefault(); drop.classList.remove('over'); }));
+drop.addEventListener('drop', (e) => takeFile(e.dataTransfer.files[0]));
+document.addEventListener('paste', (e) => { const f = [...(e.clipboardData?.files || [])].find((x) => x.type.startsWith('image/')); if (f) { e.preventDefault(); takeFile(f); } });
+
+// ---- follow-up questions ----
+async function ask(q) {
+  const out = $('#answer'); if (!out || !lastVerdict) return;
+  out.innerHTML = '<p class="answer">Thinking…</p>';
+  try {
+    const a = await followUp(q, { text: lastText, verdict: lastVerdict, privateOnly: $('#private').checked, lang: $('#lang').value });
+    out.innerHTML = `<p class="answer"><b>${esc(q)}</b>\n${esc(a.answer)}<span class="by">${a.source === 'on_device' ? '🔒 Answered on this device' : a.source === 'in_cloud' ? '☁ Answered in the cloud (message redacted)' : '🧩 No AI available'}</span></p>`;
+  } catch (err) { out.innerHTML = `<p class="answer">${esc(err.message)}</p>`; }
+}
+document.addEventListener('click', (e) => { const b = e.target.closest('[data-q]'); if (b) ask(b.dataset.q); });
+document.addEventListener('submit', (e) => { if (e.target.id === 'askf') { e.preventDefault(); const q = $('#q').value.trim(); if (q) ask(q); } });
 
 refreshEngine(); configReady.then(refreshEngine); drawHistory();

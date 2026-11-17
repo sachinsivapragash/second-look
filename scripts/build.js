@@ -2,5 +2,5 @@
 import { build } from 'esbuild';
 const common = { bundle: true, format: 'esm', minify: true, sourcemap: true, target: 'chrome120' };
 await build({ ...common, entryPoints: ['src/web/main.js'], outfile: 'public/app.js' });
-try { await build({ ...common, entryPoints: { 'sidepanel': 'src/ext/sidepanel.js', 'background': 'src/ext/background.js' }, outdir: 'extension/dist' }); } catch (e) { if (!/Could not resolve/.test(e.message)) throw e; }
+try { await build({ ...common, entryPoints: { popup: 'src/ext/popup.js', background: 'src/ext/background.js' }, outdir: 'extension/dist' }); } catch (e) { if (!/Could not resolve/.test(e.message)) throw e; }
 console.log('built');

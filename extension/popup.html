@@ -1,0 +1,20 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><title>Second Look</title>
+<style>
+body{width:340px;margin:0;font:14px/1.45 "Segoe UI",system-ui,sans-serif;background:#f6f1e7;color:#1f2328;padding:12px}
+h1{font:600 17px Georgia,serif;margin:0 0 8px;display:flex;gap:6px;align-items:center}
+textarea{width:100%;box-sizing:border-box;height:90px;border:1.5px solid #e3dccd;border-radius:10px;padding:8px;font:inherit;background:#fffdf8}
+.row{display:flex;gap:6px;margin:8px 0}
+button{flex:1;font:inherit;min-height:36px;border-radius:10px;border:1.5px solid #e3dccd;background:#fffdf8;cursor:pointer}
+button.pri{background:#0f6e6a;border-color:#0f6e6a;color:#fff;font-weight:700}
+.out{border-radius:10px;padding:10px;border:2px solid #e3dccd;background:#fffdf8}
+.out.high{border-color:#b42318}.out.medium{border-color:#9a5b00}.out.low{border-color:#1d7a46}
+.out ul{margin:6px 0;padding-left:18px}.small{color:#5d5a54;font-size:12px;margin:6px 0 0}
+</style></head>
+<body>
+<h1><img src="icon.svg" width="20" height="20" alt="">Second Look</h1>
+<textarea id="txt" aria-label="Text to check" placeholder="Select text on the page, or paste here"></textarea>
+<div class="row"><button id="scan" type="button">Instant check</button><button id="full" class="pri" type="button">Full AI check ↗</button></div>
+<div id="out" class="out" aria-live="polite">Reading the page…</div>
+<script type="module" src="dist/popup.js"></script>
+</body></html>
