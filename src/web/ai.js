@@ -78,6 +78,7 @@ async function generate(mode, opts, content) {
   try { return await modelFor(mode, opts).generateContent(content); }
   catch (e) {
     const fb = cfg().fallbackModel || 'gemini-3.5-flash-lite';
+    console.info('[Second Look] cloud error', { mode, cloud: MODES.CLOUD, fb, main: cfg().cloudModel, match: OVERLOADED.test(String(e?.message || e)) });
     if (mode !== MODES.CLOUD || fb === cfg().cloudModel || !OVERLOADED.test(String(e?.message || e))) throw e;
     console.info('[Second Look] main model unavailable, retrying with', fb);
     try { return await modelFor(mode, { ...opts, model: fb }).generateContent(content); }
