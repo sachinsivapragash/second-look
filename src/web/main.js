@@ -76,7 +76,7 @@ function receipt(r) {
       <details><summary>Show exactly what was sent</summary><pre>${esc(r.redaction?.sentText || '')}</pre></details></div>`;
   }
   const why = r.why === 'private-no-model' ? 'Private mode is on and this browser has no on-device AI, so only the instant checks ran.'
-    : r.error ? 'The AI could not be reached right now, so this answer comes from the instant checks alone.' : 'Only the instant checks ran.';
+    : r.error ? `The AI could not be reached right now, so this answer comes from the instant checks alone. <small class="muted">(${esc(r.error.slice(0, 220))})</small>` : 'Only the instant checks ran.';
   return `<div class="receipt checks"><div class="head"><span>PRIVACY RECEIPT</span><span>offline</span></div><p>🧩 ${why}<br><b>Sent to the internet: nothing.</b></p></div>`;
 }
 
