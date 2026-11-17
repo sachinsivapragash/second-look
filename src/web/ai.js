@@ -77,8 +77,9 @@ const OVERLOADED = /(429|500|503)|high demand|overloaded|unavailable|exhausted
 async function generate(mode, opts, content) {
   try { return await modelFor(mode, opts).generateContent(content); }
   catch (e) {
-    const fb = cfg().fallbackModel;
-    if (mode !== MODES.CLOUD || !fb || fb === cfg().cloudModel || !OVERLOADED.test(e.message)) throw e;
+    const fb = cfg().fallbackModel || 'gemini-3.5-flash-lite';
+    if (mode !== MODES.CLOUD || fb === cfg().cloudModel || !OVERLOADED.test(String(e?.message || e))) throw e;
+    console.info('[Second Look] main model unavailable, retrying with', fb);
     return await modelFor(mode, { ...opts, model: fb }).generateContent(content);
   }
 }
