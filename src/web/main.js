@@ -77,7 +77,8 @@ function receipt(r) {
   }
   const why = r.why === 'private-no-model' ? 'Private mode is on and this browser has no on-device AI, so only the instant checks ran.'
     : r.error ? `The AI could not be reached right now, so this answer comes from the instant checks alone. <small class="muted">(${esc(r.error.slice(0, 220))})</small>` : 'Only the instant checks ran.';
-  return `<div class="receipt checks"><div class="head"><span>PRIVACY RECEIPT</span><span>offline</span></div><p>🧩 ${why}<br><b>Sent to the internet: nothing.</b></p></div>`;
+  const sentLine = r.error && r.redaction ? 'The cloud was tried with the redacted text only.' : r.error && r.image ? 'The screenshot you agreed to send was tried in the cloud.' : 'Sent to the internet: nothing.';
+  return `<div class="receipt checks"><div class="head"><span>PRIVACY RECEIPT</span><span>offline</span></div><p>🧩 ${why}<br><b>${sentLine}</b></p></div>`;
 }
 
 async function render(text, r) {
