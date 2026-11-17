@@ -73,7 +73,8 @@ export const ANSWER_LANGUAGES = LANG_NAMES;
 const langLine = (lang) => (lang && lang !== 'en' ? `Write explanation, flags and whatToDo in ${LANG_NAMES[lang] || 'English'}. Keep the JSON keys in English.` : '');
 
 // Cloud calls fall back to a lighter model when the main one is overloaded (HTTP 429/500/503).
-const OVERLOADED = /(429|500|503)|high demand|overloaded|unavailable|exhausted/i;
+const OVERLOADED = /429|500|503|high demand|overloaded|unavailable|exhausted|quota/i;
+const errText = (e) => [e?.message, e?.code, e?.customErrorData?.status, e?.customErrorData?.statusText, String(e)].join(" ");
 async function generate(mode, opts, content) {
   try { return await modelFor(mode, opts).generateContent(content); }
   catch (e) {
