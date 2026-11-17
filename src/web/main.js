@@ -31,6 +31,22 @@ async function refreshEngine() {
   });
 }
 
+// Headlines and section labels in each answer language: [high, medium, low, what to do, why, ask about it]
+const UI = {
+  hi: ['यह लगभग निश्चित रूप से धोखा है', 'सावधान रहें: यह संदिग्ध लगता है', 'धोखे के कोई स्पष्ट संकेत नहीं', 'क्या करें', 'क्यों', 'इसके बारे में पूछें'],
+  ta: ['இது பெரும்பாலும் ஒரு மோசடி', 'கவனம்: இது சந்தேகமாகத் தெரிகிறது', 'மோசடிக்கான தெளிவான அறிகுறிகள் இல்லை', 'என்ன செய்வது', 'ஏன்', 'இதைப் பற்றி கேளுங்கள்'],
+  te: ['ఇది దాదాపు ఖచ్చితంగా మోసం', 'జాగ్రత్త: ఇది అనుమానాస్పదంగా ఉంది', 'మోసం యొక్క స్పష్టమైన సంకేతాలు లేవు', 'ఏం చేయాలి', 'ఎందుకు', 'దీని గురించి అడగండి'],
+  bn: ['এটি প্রায় নিশ্চিতভাবে একটি প্রতারণা', 'সাবধান: এটি সন্দেহজনক মনে হচ্ছে', 'প্রতারণার কোনো স্পষ্ট লক্ষণ নেই', 'কী করবেন', 'কেন', 'এ বিষয়ে জিজ্ঞাসা করুন'],
+  mr: ['हा जवळजवळ नक्कीच फसवणुकीचा प्रकार आहे', 'सावध राहा: हे संशयास्पद दिसते', 'फसवणुकीची कोणतीही स्पष्ट चिन्हे नाहीत', 'काय करावे', 'का', 'याबद्दल विचारा'],
+  es: ['Esto es muy probablemente una estafa', 'Cuidado: esto parece sospechoso', 'No hay señales claras de estafa', 'Qué hacer', 'Por qué', 'Pregunta sobre esto'],
+  fr: ['C’est très probablement une arnaque', 'Prudence : cela semble suspect', 'Aucun signe clair d’arnaque', 'Que faire', 'Pourquoi', 'Poser une question'],
+  ar: ['هذه على الأرجح عملية احتيال', 'احذر: تبدو هذه الرسالة مريبة', 'لا توجد علامات واضحة على الاحتيال', 'ماذا تفعل', 'لماذا', 'اسأل عنها'],
+  pt: ['Isto é muito provavelmente um golpe', 'Cuidado: isto parece suspeito', 'Nenhum sinal claro de golpe', 'O que fazer', 'Por quê', 'Pergunte sobre isto'],
+  ja: ['これは詐欺の可能性が非常に高いです', '注意：怪しいメッセージです', '詐欺の明らかな兆候はありません', 'すべきこと', '理由', 'これについて質問する'],
+  sw: ['Huu ni utapeli kwa uwezekano mkubwa', 'Kuwa mwangalifu: hii inaonekana ya kutiliwa shaka', 'Hakuna dalili wazi za utapeli', 'Cha kufanya', 'Kwa nini', 'Uliza kuhusu hili'],
+};
+const ui = (i, en) => UI[$('#lang')?.value]?.[i] || en;
+
 // ---- states ----
 const RISK = {
   high: { title: 'This is very likely a scam', icon: '⛔' },
@@ -57,7 +73,7 @@ function highlight(text, quotes) {
 function askBox(r) {
   const qs = r.risk === 'low' ? ['How can I double-check who sent this?', 'What signs should I watch for?']
     : ['I already clicked the link. What now?', 'I already paid or shared a code. What now?', 'How do I report this?'];
-  return `<div class="ask"><h3>Ask about it</h3><div class="qs">${qs.map((q) => `<button type="button" data-q="${esc(q)}">${esc(q)}</button>`).join('')}</div>
+  return `<div class="ask"><h3>${ui(5, 'Ask about it')}</h3><div class="qs">${qs.map((q) => `<button type="button" data-q="${esc(q)}">${esc(q)}</button>`).join('')}</div>
     <form id="askf"><label for="q" class="sr">Your question</label><input id="q" maxlength="500" placeholder="Ask anything about this message…" autocomplete="off"><button type="submit">Ask</button></form><div id="answer" aria-live="polite"></div></div>`;
 }
 function receipt(r) {
@@ -91,12 +107,13 @@ async function render(text, r) {
     : ['Do not reply, click links, pay, or share any code.', 'Contact the company or person using a number you already have, not one in the message.', 'Block and report the sender.'];
   const todo = r.whatToDo.length ? r.whatToDo : fallbackTodo;
   $('#result').className = `result ${r.risk}`;
+  $('#result').lang = $('#lang').value; $('#result').dir = $('#lang').value === 'ar' ? 'rtl' : 'ltr';
   $('#result').innerHTML = `
-    <div class="stamp"><span class="icon" aria-hidden="true">${k.icon}</span><div><h2>${k.title}</h2>${r.scamType && !/^(none|unknown)$/i.test(r.scamType) ? `<p>${esc(r.scamType)}</p>` : ''}</div></div>
+    <div class="stamp"><span class="icon" aria-hidden="true">${k.icon}</span><div><h2>${ui(['high', 'medium', 'low'].indexOf(r.risk), k.title)}</h2>${r.scamType && !/^(none|unknown)$/i.test(r.scamType) ? `<p>${esc(r.scamType)}</p>` : ''}</div></div>
     ${r.explanation ? `<p class="why">${esc(r.explanation)}</p>` : ''}
     ${r.raisedByChecks ? '<p class="note">The AI was less worried, but the instant checks found a hard warning sign, so the warning stays.</p>' : ''}
-    <h3>What to do</h3><ol class="todo">${todo.map((s) => `<li>${esc(s)}</li>`).join('')}</ol>
-    ${r.redFlags.length ? `<h3>Why</h3><ul class="flags">${r.redFlags.map((f) => `<li>${esc(f.flag)}${f.quote ? `<q>${esc(f.quote)}</q>` : ''}</li>`).join('')}</ul>` : ''}
+    <h3>${ui(3, 'What to do')}</h3><ol class="todo">${todo.map((s) => `<li>${esc(s)}</li>`).join('')}</ol>
+    ${r.redFlags.length ? `<h3>${ui(4, 'Why')}</h3><ul class="flags">${r.redFlags.map((f) => `<li>${esc(f.flag)}${f.quote ? `<q>${esc(f.quote)}</q>` : ''}</li>`).join('')}</ul>` : ''}
     ${hosts.length ? `<h3>Links in this message</h3><ul class="hosts">${hosts.map((h) => `<li><code>${esc(h)}</code><span class="count" data-host="${esc(h)}"></span><button type="button" data-report="${esc(h)}">Report as scam</button></li>`).join('')}</ul>` : ''}
     ${r.image ? `<details class="msg"><summary>Show the screenshot</summary><img class="shot" src="${shotURL}" alt="Checked screenshot"></details>` : `<details class="msg"><summary>Show the message with warning signs highlighted</summary><blockquote>${highlight(text, quotes)}</blockquote></details>`}
     ${askBox(r)}
