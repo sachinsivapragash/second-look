@@ -1,0 +1,58 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#f6f1e7">
+<meta name="description" content="Second Look: paste a suspicious message and get a calm, plain-language scam check. Runs on your device with Gemini Nano when it can; otherwise sends only a version with your personal data removed.">
+<title>Second Look · is this a scam?</title>
+<link rel="icon" href="/icon.svg" type="image/svg+xml">
+<link rel="stylesheet" href="/styles.css">
+</head>
+<body>
+<header class="top">
+  <a class="brand" href="/" aria-label="Second Look home"><img src="/icon.svg" alt="" width="30" height="30"><b>Second Look</b></a>
+  <div id="engine" class="engine" role="status" aria-live="polite"><span class="dot"></span><span>Checking this browser…</span></div>
+</header>
+
+<main class="layout">
+  <section class="input" aria-labelledby="ask">
+    <h1 id="ask">Got a message that feels off?</h1>
+    <p class="sub">Paste it here. You’ll get a straight answer and what to do next.</p>
+    <label for="msg" class="sr">Message to check</label>
+    <textarea id="msg" rows="9" maxlength="20000" placeholder="Paste the text message, email or web page…"></textarea>
+    <div class="examples"><span>Or try an example:</span>
+      <button data-ex="parcel" type="button">📦 Parcel fee</button>
+      <button data-ex="mum" type="button">👋 “Hi Mum, new number”</button>
+      <button data-ex="bank" type="button">🏦 Bank “security” call</button>
+      <button data-ex="ok" type="button">✉️ Normal message</button>
+    </div>
+    <div class="actions">
+      <label class="switch"><input type="checkbox" id="private"><span class="track" aria-hidden="true"></span><span>Private only<small>Never use the cloud</small></span></label>
+      <button id="go" class="pri" type="button">Check it</button>
+    </div>
+    <p id="err" class="err" role="alert"></p>
+    <details class="how"><summary>How your privacy is protected</summary>
+      <ol>
+        <li>Instant checks run on your device for the classic tricks: codes, gift cards, pressure, look-alike links.</li>
+        <li>If Chrome’s built-in Gemini Nano is ready, the AI runs on your device too. Nothing is sent.</li>
+        <li>If not, phone numbers, emails, card numbers, codes and link paths are removed on your device first, then Gemini checks the rest through Firebase AI Logic. The receipt shows exactly what was sent.</li>
+        <li>The AI can raise a warning, never lower it below the instant checks, and it ignores instructions hidden in the message.</li>
+      </ol>
+    </details>
+  </section>
+
+  <section id="result" class="result empty" aria-live="polite" aria-label="Result">
+    <div class="placeholder">
+      <div class="shield" aria-hidden="true">🛡️</div>
+      <p><b>Your answer appears here.</b></p>
+      <p>It takes a few seconds. Nothing you paste is saved.</p>
+    </div>
+  </section>
+</main>
+
+<section id="history" class="history hidden" aria-label="Recent checks"></section>
+<footer>Second Look is open source (Apache-2.0) and built on Firebase AI Logic hybrid inference. It can be wrong. If you already paid or shared a code, call your bank on the number on your card.</footer>
+<script type="module" src="/app.js"></script>
+</body>
+</html>

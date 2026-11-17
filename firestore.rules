@@ -1,0 +1,17 @@
+rules_version = '2';
+// Community scam-site reports. Only a SHA-256 hash of the domain is stored, never the address or the message.
+// Each anonymous user can file one report per domain (doc id = their uid), containing only a server timestamp.
+service cloud.firestore {
+  match /databases/{database}/documents {
+    match /domains/{hash}/reports/{uid} {
+      allow read: if request.auth != null;
+      allow create: if request.auth != null
+        && request.auth.uid == uid
+        && hash.matches('^[a-f0-9]{64}$')
+        && request.resource.data.keys().hasOnly(['at'])
+        && request.resource.data.at == request.time;
+      allow update, delete: if false;
+    }
+    match /{document=**} { allow read, write: if false; }
+  }
+}

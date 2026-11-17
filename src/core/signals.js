@@ -10,7 +10,7 @@ const RULES = [
   { id: 'crypto_pay', weight: 4, label: 'Wants payment in crypto or a wire to a stranger',
     re: /\b(pay|send|transfer|deposit)\b[^.\n]{0,40}\b(bitcoin|btc|usdt|crypto|wallet address|western union|moneygram)\b/i },
   { id: 'urgency', weight: 2, label: 'Pressure to act right now',
-    re: /\b(urgent|immediately|within (24|48) hours|act now|final (notice|warning)|last chance|account (will be )?(suspended|locked|closed)|expires? today)\b|\bimmédiatement\b|\bdernier avertissement\b/i },
+    re: /\b(urgent(ly)?|immediately|within (\d+|24|48) (hours|minutes)|act now|final (notice|warning)|last chance|(be )?(suspended|locked|closed|blocked)|expires? (today|in \d+ (minutes?|hours?)))\b|\bimmédiatement\b|\bdernier avertissement\b/i },
   { id: 'prize', weight: 3, label: 'Prize, lottery or inheritance you never asked for',
     re: /\b(you('ve| have)? won|winner|lottery|jackpot|inheritance|claim your (prize|reward)|unclaimed (funds|package))\b|\bvous avez gagné\b/i },
   { id: 'job_fee', weight: 3, label: 'Job or task that pays well but needs a fee first',
