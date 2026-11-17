@@ -1,0 +1,10 @@
+node_modules/
+.env
+.env.*
+!.env.example
+public/*.js
+public/*.js.map
+extension/dist/
+video/
+.firebase/
+*.log
