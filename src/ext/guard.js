@@ -3,11 +3,17 @@
 // unless you press "Full check", which opens Second Look with the text in the URL fragment.
 import { scanSignals } from '../core/signals.js';
 
+// Each site returns the message elements to scan. Checked against the live sites (Nov 2026).
+// WhatsApp Web's class names are generated, so incoming messages are found by structure instead:
+// every message has a [data-pre-plain-text] container; your own messages carry a delivery status
+// ("You:", Sent/Delivered/Read) or an outgoing tail, incoming ones do not.
+const OUTGOING = '[data-icon="tail-out"], [data-icon^="msg-"], [aria-label^="You"], [aria-label^="Sent"], [aria-label^="Delivered"], [aria-label^="Read"], [aria-label^="Pending"]';
 const SITES = {
-  'mail.google.com': '.a3s.aiL, .a3s',                                      // opened email bodies
-  'web.whatsapp.com': '.message-in .copyable-text, .message-in span.selectable-text', // incoming chat bubbles
+  'mail.google.com': () => document.querySelectorAll('.a3s'),             // opened email bodies
+  'web.whatsapp.com': () => [...document.querySelectorAll('#main [data-pre-plain-text]')]
+    .filter((el) => !(el.closest('[role="row"]') || el.parentElement)?.querySelector(OUTGOING)),
 };
-const selector = SITES[location.hostname];
+const find = SITES[location.hostname];
 const seen = new WeakSet();
 
 function banner(el, sig) {
@@ -34,8 +40,8 @@ function banner(el, sig) {
 }
 
 function scan() {
-  if (!selector) return;
-  for (const el of document.querySelectorAll(selector)) {
+  if (!find) return;
+  for (const el of find()) {
     if (seen.has(el) || el.closest('[data-second-look]')) continue;
     seen.add(el);
     const text = el.innerText || '';
