@@ -7,7 +7,7 @@
 **Links**
 - Try it: https://sachinsivapragash.github.io/second-look/
 - Code (Apache-2.0): https://github.com/sachinsivapragash/second-look
-- Video: *(add the YouTube link)*
+- Video: https://youtu.be/3dge9OMnXcQ
 
 **Built with:** firebase-ai-logic, gemini-nano, gemini, chrome-prompt-api, firebase-app-check, recaptcha-enterprise, firebase-authentication, cloud-firestore, firebase-remote-config, chrome-extensions, javascript, esbuild, github-pages
 
