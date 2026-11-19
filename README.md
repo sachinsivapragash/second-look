@@ -17,6 +17,15 @@ Second Look uses the Firebase AI Logic Web SDK (`firebase/ai`), `getGenerativeMo
 - A **Private only** switch never uses the cloud. Without on-device AI it falls back to the instant checks alone.
 - **On-device model download:** if Chrome reports `downloadable`, a button starts the download (it needs a user gesture), and the app uses the cloud until the model is ready.
 
+## Screenshots
+| | |
+|---|---|
+| ![Verdict](docs/screenshots/verdict.jpg) | ![Privacy receipt](docs/screenshots/receipt.jpg) |
+| ![Follow-up question](docs/screenshots/follow-up.jpg) | ![Answer in Hindi](docs/screenshots/hindi.jpg) |
+| ![Screenshot check](docs/screenshots/screenshot-check.jpg) | ![Extension warning in WhatsApp Web](docs/screenshots/extension.jpg) |
+
+Demo video: https://youtu.be/3dge9OMnXcQ
+
 ## Features
 - **Text or screenshot:** paste a message, or drop/paste a screenshot (WhatsApp, SMS, fake receipts). Images are read on-device when Chrome supports image input; otherwise they go to the cloud only after you tick a consent box, because pictures can't be redacted automatically.
 - **Ask about it:** follow-up questions ("I already clicked the link, what now?") answered with the same privacy routing as the check.
